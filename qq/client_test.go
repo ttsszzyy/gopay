@@ -1,15 +1,17 @@
 package qq
 
 import (
+	"context"
 	"os"
 	"testing"
 
-	"github.com/iGoogle-ink/gopay"
-	"github.com/iGoogle-ink/gopay/pkg/util"
-	"github.com/iGoogle-ink/gopay/pkg/xlog"
+	"github.com/go-pay/gopay"
+	"github.com/go-pay/gopay/pkg/util"
+	"github.com/go-pay/gopay/pkg/xlog"
 )
 
 var (
+	ctx    = context.Background()
 	client *Client
 	mchId  = "1368139502"
 	apiKey = "GFDS8j98rewnmgl45wHTt980jg543abc"
@@ -34,9 +36,9 @@ func TestMain(m *testing.M) {
 
 func TestClient_MicroPay(t *testing.T) {
 	bm := make(gopay.BodyMap)
-	bm.Set("nonce_str", util.GetRandomString(32))
+	bm.Set("nonce_str", util.RandomString(32))
 
-	qqRsp, err := client.MicroPay(bm)
+	qqRsp, err := client.MicroPay(ctx, bm)
 	if err != nil {
 		xlog.Errorf("client.Micropay(%+v),error:%+v", bm, err)
 		return
@@ -57,7 +59,7 @@ func TestNotifyResponse_ToXmlString(t *testing.T) {
 func TestClient_DownloadRedListFile(t *testing.T) {
 	bm := make(gopay.BodyMap)
 	bm.Set("date", 20160803)
-	file, err := client.DownloadRedListFile(bm)
+	file, err := client.DownloadRedListFile(ctx, bm)
 	if err != nil {
 		xlog.Errorf("client.DownloadRedListFile(%+v),error:%+v", bm, err)
 		return

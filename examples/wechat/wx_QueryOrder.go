@@ -1,10 +1,10 @@
 package wechat
 
 import (
-	"github.com/iGoogle-ink/gopay"
-	"github.com/iGoogle-ink/gopay/pkg/util"
-	"github.com/iGoogle-ink/gopay/pkg/xlog"
-	"github.com/iGoogle-ink/gopay/wechat"
+	"github.com/go-pay/gopay"
+	"github.com/go-pay/gopay/pkg/util"
+	"github.com/go-pay/gopay/pkg/xlog"
+	"github.com/go-pay/gopay/wechat"
 )
 
 func QueryOrder() {
@@ -19,11 +19,11 @@ func QueryOrder() {
 	// 初始化参数结构体
 	bm := make(gopay.BodyMap)
 	bm.Set("out_trade_no", "GW201908091551421156").
-		Set("nonce_str", util.GetRandomString(32)).
+		Set("nonce_str", util.RandomString(32)).
 		Set("sign_type", wechat.SignType_MD5)
 
 	// 请求订单查询，成功后得到结果
-	wxRsp, resBm, err := client.QueryOrder(bm)
+	wxRsp, resBm, err := client.QueryOrder(ctx, bm)
 	if err != nil {
 		xlog.Error(err)
 		return

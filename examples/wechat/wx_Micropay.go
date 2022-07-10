@@ -1,10 +1,10 @@
 package wechat
 
 import (
-	"github.com/iGoogle-ink/gopay"
-	"github.com/iGoogle-ink/gopay/pkg/util"
-	"github.com/iGoogle-ink/gopay/pkg/xlog"
-	"github.com/iGoogle-ink/gopay/wechat"
+	"github.com/go-pay/gopay"
+	"github.com/go-pay/gopay/pkg/util"
+	"github.com/go-pay/gopay/pkg/xlog"
+	"github.com/go-pay/gopay/wechat"
 )
 
 func Micropay() {
@@ -16,11 +16,11 @@ func Micropay() {
 	//    isProd：是否是正式环境
 	client := wechat.NewClient("wxdaa2ab9ef87b5497", "1368139502", "GFDS8j98rewnmgl45wHTt980jg543abc", false)
 
-	number := util.GetRandomString(32)
+	number := util.RandomString(32)
 	xlog.Debug("out_trade_no:", number)
 	// 初始化参数Map
 	bm := make(gopay.BodyMap)
-	bm.Set("nonce_str", util.GetRandomString(32)).
+	bm.Set("nonce_str", util.RandomString(32)).
 		Set("body", "扫用户付款码支付").
 		Set("out_trade_no", number).
 		Set("total_fee", 1).
@@ -29,7 +29,7 @@ func Micropay() {
 		Set("sign_type", wechat.SignType_MD5)
 
 	//请求支付，成功后得到结果
-	wxRsp, err := client.Micropay(bm)
+	wxRsp, err := client.Micropay(ctx, bm)
 	if err != nil {
 		xlog.Error(err)
 		return

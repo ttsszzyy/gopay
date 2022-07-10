@@ -4,9 +4,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/iGoogle-ink/gopay"
-	"github.com/iGoogle-ink/gopay/pkg/util"
-	"github.com/iGoogle-ink/gopay/pkg/xlog"
+	"github.com/go-pay/gopay"
+	"github.com/go-pay/gopay/pkg/util"
+	"github.com/go-pay/gopay/pkg/xlog"
 )
 
 func TestClient_EntrustPublic(t *testing.T) {
@@ -21,7 +21,7 @@ func TestClient_EntrustPublic(t *testing.T) {
 		Set("timestamp", time.Now().Unix())
 
 	// 公众号纯签约
-	wxRsp, err := client.EntrustPublic(bm)
+	wxRsp, err := client.EntrustPublic(ctx, bm)
 	if err != nil {
 		xlog.Errorf("client.EntrustPublic(%+v),error:%+v", bm, err)
 		return
@@ -41,7 +41,7 @@ func TestClient_EntrustAppPre(t *testing.T) {
 		Set("timestamp", time.Now().Unix())
 
 	// APP纯签约
-	wxRsp, err := client.EntrustAppPre(bm)
+	wxRsp, err := client.EntrustAppPre(ctx, bm)
 	if err != nil {
 		xlog.Errorf("client.EntrustAppPre(%+v),error:%+v", bm, err)
 		return
@@ -62,7 +62,7 @@ func TestClient_EntrustH5(t *testing.T) {
 		Set("clientip", "127.0.0.1")
 
 	// H5纯签约
-	wxRsp, err := client.EntrustH5(bm)
+	wxRsp, err := client.EntrustH5(ctx, bm)
 	if err != nil {
 		xlog.Errorf("client.EntrustH5(%+v),error:%+v", bm, err)
 		return
@@ -71,14 +71,14 @@ func TestClient_EntrustH5(t *testing.T) {
 }
 
 func TestClient_EntrustPaying(t *testing.T) {
-	number := util.GetRandomString(32)
+	number := util.RandomString(32)
 	xlog.Info("out_trade_no:", number)
 	// 初始化参数结构体
 	bm := make(gopay.BodyMap)
 	bm.Set("contract_mchid", mchId).
 		Set("contract_appid", appId).
 		Set("out_trade_no", number).
-		Set("nonce_str", util.GetRandomString(32)).
+		Set("nonce_str", util.RandomString(32)).
 		Set("body", "测试签约").
 		Set("total_fee", 1).
 		Set("spbill_create_ip", "127.0.0.1").
@@ -93,7 +93,7 @@ func TestClient_EntrustPaying(t *testing.T) {
 	//bm.Set("openid", "o0Df70H2Q0fY8JXh1aFPIRyOBgu8")
 
 	// 支付中签约
-	wxRsp, err := client.EntrustPaying(bm)
+	wxRsp, err := client.EntrustPaying(ctx, bm)
 	if err != nil {
 		xlog.Errorf("client.EntrustPaying(%+v),error:%+v", bm, err)
 		return

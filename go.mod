@@ -1,5 +1,5 @@
-module github.com/iGoogle-ink/gopay
+module github.com/go-pay/gopay
 
-go 1.14
+go 1.16
 
-require golang.org/x/crypto v0.0.0-20210220033148-5ea612d1eb83
+require golang.org/x/crypto v0.0.0-20220331220935-ae2d96664a29

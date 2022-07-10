@@ -4,10 +4,10 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/iGoogle-ink/gopay"
-	"github.com/iGoogle-ink/gopay/pkg/util"
-	"github.com/iGoogle-ink/gopay/pkg/xlog"
-	"github.com/iGoogle-ink/gopay/wechat"
+	"github.com/go-pay/gopay"
+	"github.com/go-pay/gopay/pkg/util"
+	"github.com/go-pay/gopay/pkg/xlog"
+	"github.com/go-pay/gopay/wechat"
 )
 
 func UnifiedOrder() {
@@ -22,30 +22,30 @@ func UnifiedOrder() {
 	//设置国家
 	client.SetCountry(wechat.China)
 
-	number := util.GetRandomString(32)
+	number := util.RandomString(32)
 	xlog.Debug("out_trade_no:", number)
 
 	//初始化参数Map
 	bm := make(gopay.BodyMap)
-	bm.Set("nonce_str", util.GetRandomString(32)).
+	bm.Set("nonce_str", util.RandomString(32)).
 		Set("body", "H5支付").
 		Set("out_trade_no", number).
 		Set("total_fee", 1).
 		Set("spbill_create_ip", "127.0.0.1").
-		Set("notify_url", "https://www.fumm.cc").
+		Set("notify_url", "https://www.fmm.ink").
 		Set("trade_type", wechat.TradeType_H5).
 		Set("device_info", "WEB").
 		Set("sign_type", wechat.SignType_MD5).
 		SetBodyMap("scene_info", func(bm gopay.BodyMap) {
 			bm.SetBodyMap("h5_info", func(bm gopay.BodyMap) {
 				bm.Set("type", "Wap")
-				bm.Set("wap_url", "https://www.fumm.cc")
+				bm.Set("wap_url", "https://www.fmm.ink")
 				bm.Set("wap_name", "H5测试支付")
 			})
 		}) /*.Set("openid", "o0Df70H2Q0fY8JXh1aFPIRyOBgu8")*/
 
 	//请求支付下单，成功后得到结果
-	wxRsp, err := client.UnifiedOrder(bm)
+	wxRsp, err := client.UnifiedOrder(ctx, bm)
 	if err != nil {
 		xlog.Error(err)
 		return

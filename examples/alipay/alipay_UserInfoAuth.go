@@ -1,9 +1,9 @@
 package alipay
 
 import (
-	"github.com/iGoogle-ink/gopay"
-	"github.com/iGoogle-ink/gopay/alipay"
-	"github.com/iGoogle-ink/gopay/pkg/xlog"
+	"github.com/go-pay/gopay"
+	"github.com/go-pay/gopay/alipay"
+	"github.com/go-pay/gopay/pkg/xlog"
 )
 
 func UserInfoAuth() {
@@ -13,11 +13,14 @@ func UserInfoAuth() {
 	//    appId：应用ID
 	//    privateKey：应用秘钥
 	//    isProd：是否是正式环境
-	client := alipay.NewClient("2016091200494382", privateKey, false)
+	client, err := alipay.NewClient("2016091200494382", privateKey, false)
+	if err != nil {
+		xlog.Error(err)
+		return
+	}
 	//配置公共参数
 	client.SetCharset("utf-8").
-		SetSignType(alipay.RSA2).
-		SetPrivateKeyType(alipay.PKCS1)
+		SetSignType(alipay.RSA2)
 
 	// 请求参数
 	bm := make(gopay.BodyMap)
@@ -26,7 +29,7 @@ func UserInfoAuth() {
 	bm.Set("state", "init")
 
 	// 发起请求
-	aliRsp, err := client.UserInfoAuth(bm)
+	aliRsp, err := client.UserInfoAuth(ctx, bm)
 	if err != nil {
 		xlog.Error("err:", err)
 		return

@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/iGoogle-ink/gopay"
-	"github.com/iGoogle-ink/gopay/pkg/util"
+	"github.com/go-pay/gopay"
+	"github.com/go-pay/gopay/pkg/util"
 )
 
 // 解析支付宝支付异步通知的参数到BodyMap
@@ -29,7 +29,7 @@ func ParseNotifyToBodyMap(req *http.Request) (bm gopay.BodyMap, err error) {
 	return
 }
 
-// 通过 url.Values 解析支付宝支付异步通知的参数到Struct
+// 通过 url.Values 解析支付宝支付异步通知的参数到BodyMap
 //	value：url.Values
 //	返回参数notifyReq：Notify请求的参数
 //	返回参数err：错误信息
@@ -45,6 +45,7 @@ func ParseNotifyByURLValues(value url.Values) (bm gopay.BodyMap, err error) {
 }
 
 // Deprecated
+// 推荐使用 ParseNotifyToBodyMap()，以防阿里云通知参数变动，NotifyRequest 无法解析。
 // 解析支付宝支付异步通知的参数到Struct
 //	req：*http.Request
 //	返回参数notifyReq：Notify请求的参数
@@ -99,7 +100,7 @@ func ParseNotifyResult(req *http.Request) (notifyReq *NotifyRequest, err error) 
 
 	detailList := req.Form.Get("voucher_detail_list")
 	if detailList != util.NULL {
-		details := make([]*VoucherDetailListInfo, 0)
+		details := make([]*VoucherDetail, 0)
 		if err = json.Unmarshal([]byte(detailList), &details); err != nil {
 			return nil, fmt.Errorf(`"voucher_detail_list" xml.Unmarshal(%s)：%w`, detailList, err)
 		}

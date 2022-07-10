@@ -1,9 +1,9 @@
 package alipay
 
 import (
-	"github.com/iGoogle-ink/gopay"
-	"github.com/iGoogle-ink/gopay/alipay"
-	"github.com/iGoogle-ink/gopay/pkg/xlog"
+	"github.com/go-pay/gopay"
+	"github.com/go-pay/gopay/alipay"
+	"github.com/go-pay/gopay/pkg/xlog"
 )
 
 func TradeCancel() {
@@ -13,18 +13,21 @@ func TradeCancel() {
 	//    appId：应用ID
 	//    privateKey：应用私钥，支持PKCS1和PKCS8
 	//    isProd：是否是正式环境
-	client := alipay.NewClient("2016091200494382", privateKey, false)
+	client, err := alipay.NewClient("2016091200494382", privateKey, false)
+	if err != nil {
+		xlog.Error(err)
+		return
+	}
 	//配置公共参数
 	client.SetCharset("utf-8").
 		SetSignType(alipay.RSA2).
-		SetPrivateKeyType(alipay.PKCS1).
-		SetNotifyUrl("https://www.fumm.cc")
+		SetNotifyUrl("https://www.fmm.ink")
 
 	//请求参数
-	body := make(gopay.BodyMap)
-	body.Set("out_trade_no", "GYWX201901301040355706100457")
+	bm := make(gopay.BodyMap)
+	bm.Set("out_trade_no", "GYWX201901301040355706100457")
 	//撤销支付订单
-	aliRsp, err := client.TradeCancel(body)
+	aliRsp, err := client.TradeCancel(ctx, bm)
 	if err != nil {
 		xlog.Error("err:", err)
 		return

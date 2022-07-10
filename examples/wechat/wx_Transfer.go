@@ -1,10 +1,10 @@
 package wechat
 
 import (
-	"github.com/iGoogle-ink/gopay"
-	"github.com/iGoogle-ink/gopay/pkg/util"
-	"github.com/iGoogle-ink/gopay/pkg/xlog"
-	"github.com/iGoogle-ink/gopay/wechat"
+	"github.com/go-pay/gopay"
+	"github.com/go-pay/gopay/pkg/util"
+	"github.com/go-pay/gopay/pkg/xlog"
+	"github.com/go-pay/gopay/wechat"
 )
 
 func Transfer() {
@@ -16,7 +16,7 @@ func Transfer() {
 	//    isProd：是否是正式环境（企业转账到个人账户，默认正式环境）
 	client := wechat.NewClient("wxdaa2ab9ef87b5497", "1368139502", "GFDS8j98rewnmgl45wHTt980jg543abc", false)
 
-	err := client.AddCertFilePath("iguiyu_cert/apiclient_cert.pem", "iguiyu_cert/apiclient_key.pem", "iguiyu_cert/apiclient_cert.p12")
+	err := client.AddCertPkcs12FileContent([]byte("apiclient_cert.p12 content"))
 	if err != nil {
 		xlog.Error(err)
 		return
@@ -24,8 +24,8 @@ func Transfer() {
 
 	// 初始化参数结构体
 	bm := make(gopay.BodyMap)
-	bm.Set("nonce_str", util.GetRandomString(32)).
-		Set("partner_trade_no", util.GetRandomString(32)).
+	bm.Set("nonce_str", util.RandomString(32)).
+		Set("partner_trade_no", util.RandomString(32)).
 		Set("openid", "o0Df70H2Q0fY8JXh1aFPIRyOBgu8").
 		Set("check_name", "FORCE_CHECK"). // NO_CHECK：不校验真实姓名 , FORCE_CHECK：强校验真实姓名
 		Set("re_user_name", "付明明").       // 收款用户真实姓名。 如果check_name设置为FORCE_CHECK，则必填用户真实姓名
@@ -35,10 +35,7 @@ func Transfer() {
 
 	// 企业向微信用户个人付款（不支持沙箱环境）
 	//    body：参数Body
-	//    certFilePath：cert证书路径
-	//    keyFilePath：Key证书路径
-	//    pkcs12FilePath：p12证书路径
-	wxRsp, err := client.Transfer(bm, nil, nil, nil)
+	wxRsp, err := client.Transfer(ctx, bm)
 	if err != nil {
 		xlog.Error(err)
 		return

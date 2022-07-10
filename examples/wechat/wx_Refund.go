@@ -1,11 +1,15 @@
 package wechat
 
 import (
-	"github.com/iGoogle-ink/gopay"
-	"github.com/iGoogle-ink/gopay/pkg/util"
-	"github.com/iGoogle-ink/gopay/pkg/xlog"
-	"github.com/iGoogle-ink/gopay/wechat"
+	"context"
+
+	"github.com/go-pay/gopay"
+	"github.com/go-pay/gopay/pkg/util"
+	"github.com/go-pay/gopay/pkg/xlog"
+	"github.com/go-pay/gopay/wechat"
 )
+
+var ctx = context.Background()
 
 func Refund() {
 	// client只需要初始化一个，此处为了演示，每个方法都做了初始化
@@ -16,24 +20,21 @@ func Refund() {
 	//    isProd：是否是正式环境
 	client := wechat.NewClient("wxdaa2ab9ef87b5497", "1368139502", "GFDS8j98rewnmgl45wHTt980jg543abc", false)
 
-	s := util.GetRandomString(64)
+	s := util.RandomString(64)
 	xlog.Debug("out_refund_no:", s)
 	// 初始化参数结构体
 	bm := make(gopay.BodyMap)
 	bm.Set("out_trade_no", "SdZBAqJHBQGKVwb7aMR2mUwC588NG2Sd").
-		Set("nonce_str", util.GetRandomString(32)).
+		Set("nonce_str", util.RandomString(32)).
 		Set("sign_type", wechat.SignType_MD5).
 		Set("out_refund_no", s).
 		Set("total_fee", 1).
 		Set("refund_fee", 1).
-		Set("notify_url", "https://www.fumm.cc")
+		Set("notify_url", "https://www.fmm.ink")
 
 	//请求申请退款（沙箱环境下，证书路径参数可传空）
 	//    body：参数Body
-	//    certFilePath：cert证书路径
-	//    keyFilePath：Key证书路径
-	//    pkcs12FilePath：p12证书路径
-	wxRsp, resBm, err := client.Refund(bm, "iguiyu_cert/apiclient_cert.pem", "iguiyu_cert/apiclient_key.pem", "iguiyu_cert/apiclient_cert.p12")
+	wxRsp, resBm, err := client.Refund(ctx, bm)
 	if err != nil {
 		xlog.Error(err)
 		return

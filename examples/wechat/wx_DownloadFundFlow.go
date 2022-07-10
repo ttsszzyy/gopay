@@ -1,10 +1,10 @@
 package wechat
 
 import (
-	"github.com/iGoogle-ink/gopay"
-	"github.com/iGoogle-ink/gopay/pkg/util"
-	"github.com/iGoogle-ink/gopay/pkg/xlog"
-	"github.com/iGoogle-ink/gopay/wechat"
+	"github.com/go-pay/gopay"
+	"github.com/go-pay/gopay/pkg/util"
+	"github.com/go-pay/gopay/pkg/xlog"
+	"github.com/go-pay/gopay/wechat"
 )
 
 func DownloadFundFlow() {
@@ -19,13 +19,13 @@ func DownloadFundFlow() {
 
 	// 初始化参数结构体
 	bm := make(gopay.BodyMap)
-	bm.Set("nonce_str", util.GetRandomString(32)).
+	bm.Set("nonce_str", util.RandomString(32)).
 		Set("sign_type", wechat.SignType_HMAC_SHA256).
 		Set("bill_date", "20190122").
 		Set("account_type", "Basic")
 
 	// 请求下载资金账单，成功后得到结果，沙箱环境下，证书路径参数可传空
-	wxRsp, err := client.DownloadFundFlow(bm, nil, nil, nil)
+	wxRsp, err := client.DownloadFundFlow(ctx, bm)
 	if err != nil {
 		xlog.Error(err)
 		return

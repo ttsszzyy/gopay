@@ -1,21 +1,22 @@
 package wechat
 
 import (
-	"crypto/sha256"
+	"crypto/sha1"
+	"encoding/base64"
 	"encoding/json"
 	"testing"
 
-	"github.com/iGoogle-ink/gopay"
-	"github.com/iGoogle-ink/gopay/pkg/util"
-	"github.com/iGoogle-ink/gopay/pkg/xlog"
-	"github.com/iGoogle-ink/gopay/pkg/xrsa"
+	"github.com/go-pay/gopay"
+	"github.com/go-pay/gopay/pkg/util"
+	"github.com/go-pay/gopay/pkg/xlog"
+	"github.com/go-pay/gopay/pkg/xrsa"
 )
 
 func TestClient_Transfer(t *testing.T) {
 	// 初始化参数结构体
 	bm := make(gopay.BodyMap)
-	bm.Set("nonce_str", util.GetRandomString(32)).
-		Set("partner_trade_no", util.GetRandomString(32)).
+	bm.Set("nonce_str", util.RandomString(32)).
+		Set("partner_trade_no", util.RandomString(32)).
 		Set("openid", "o0Df70H2Q0fY8JXh1aFPIRyOBgu8").
 		Set("check_name", "FORCE_CHECK"). // NO_CHECK：不校验真实姓名 , FORCE_CHECK：强校验真实姓名
 		Set("re_user_name", "付明明").       // 收款用户真实姓名。 如果check_name设置为FORCE_CHECK，则必填用户真实姓名
@@ -25,10 +26,7 @@ func TestClient_Transfer(t *testing.T) {
 
 	// 企业向微信用户个人付款（不支持沙箱环境）
 	//    body：参数Body
-	//    certFilePath：cert证书路径
-	//    keyFilePath：Key证书路径
-	//    pkcs12FilePath：p12证书路径
-	wxRsp, err := client.Transfer(bm, nil, nil, nil)
+	wxRsp, err := client.Transfer(ctx, bm)
 	if err != nil {
 		xlog.Errorf("client.Transfer(%+v),error:%+v", bm, err)
 		return
@@ -46,7 +44,7 @@ func Test_ProfitSharing(t *testing.T) {
 
 	// 初始化参数结构体
 	bm := make(gopay.BodyMap)
-	bm.Set("nonce_str", util.GetRandomString(32)).
+	bm.Set("nonce_str", util.RandomString(32)).
 		Set("transaction_id", "4208450740201411110007820472").
 		Set("out_order_no", "P20150806125346")
 
@@ -69,7 +67,7 @@ func Test_ProfitSharing(t *testing.T) {
 
 	bm.Set("receivers", string(bs))
 
-	wxRsp, err := client.ProfitSharing(bm, nil, nil, nil)
+	wxRsp, err := client.ProfitSharing(ctx, bm)
 	if err != nil {
 		xlog.Errorf("client.ProfitSharingAddReceiver(%+v),error:%+v", bm, err)
 		return
@@ -80,7 +78,7 @@ func Test_ProfitSharing(t *testing.T) {
 func Test_ProfitSharingAddReceiver(t *testing.T) {
 	// 初始化参数结构体
 	bm := make(gopay.BodyMap)
-	bm.Set("nonce_str", util.GetRandomString(32))
+	bm.Set("nonce_str", util.RandomString(32))
 
 	receiver := make(gopay.BodyMap)
 	receiver.Set("type", "MERCHANT_ID").
@@ -90,7 +88,7 @@ func Test_ProfitSharingAddReceiver(t *testing.T) {
 
 	bm.Set("receiver", receiver.JsonBody())
 
-	wxRsp, err := client.ProfitSharingAddReceiver(bm)
+	wxRsp, err := client.ProfitSharingAddReceiver(ctx, bm)
 	if err != nil {
 		xlog.Errorf("client.ProfitSharingAddReceiver(%+v),error:%+v", bm, err)
 		return
@@ -101,7 +99,7 @@ func Test_ProfitSharingAddReceiver(t *testing.T) {
 func Test_ProfitSharingRemoveReceiver(t *testing.T) {
 	// 初始化参数结构体
 	bm := make(gopay.BodyMap)
-	bm.Set("nonce_str", util.GetRandomString(32))
+	bm.Set("nonce_str", util.RandomString(32))
 
 	receiver := make(gopay.BodyMap)
 	receiver.Set("type", "MERCHANT_ID").
@@ -109,7 +107,7 @@ func Test_ProfitSharingRemoveReceiver(t *testing.T) {
 
 	bm.Set("receiver", receiver.JsonBody())
 
-	wxRsp, err := client.ProfitSharingRemoveReceiver(bm)
+	wxRsp, err := client.ProfitSharingRemoveReceiver(ctx, bm)
 	if err != nil {
 		xlog.Errorf("client.ProfitSharingRemoveReceiver(%+v),error:%+v", bm, err)
 		return
@@ -119,9 +117,9 @@ func Test_ProfitSharingRemoveReceiver(t *testing.T) {
 
 func TestClient_GetRSAPublicKey(t *testing.T) {
 	bm := make(gopay.BodyMap)
-	bm.Set("nonce_str", util.GetRandomString(32)).
+	bm.Set("nonce_str", util.RandomString(32)).
 		Set("sign_type", SignType_MD5)
-	publicKey, err := client.GetRSAPublicKey(bm, nil, nil, nil)
+	publicKey, err := client.GetRSAPublicKey(ctx, bm)
 	if err != nil {
 		xlog.Error(err)
 		return
@@ -133,25 +131,28 @@ func TestClient_PayBank(t *testing.T) {
 	// 初始化参数结构体
 	bm := make(gopay.BodyMap)
 	bm.Set("partner_trade_no", mchId).
-		Set("nonce_str", util.GetRandomString(32)).
+		Set("nonce_str", util.RandomString(32)).
 		Set("bank_code", "1001"). // 招商银行，https://pay.weixin.qq.com/wiki/doc/api/tools/mch_pay.php?chapter=24_4&index=5
 		Set("amount", 1)
 
-	encryptBank, err := xrsa.RsaEncryptOAEPData(sha256.New(), xrsa.PKCS1, "publicKey.pem", []byte("621400000000567"), nil)
+	// publicKey 通过 client.GetRSAPublicKey() 获取
+	// 加密 银行账号，需要转 base64，微信解密使用的是 sha1
+	encryptBank, err := xrsa.RsaEncryptOAEPData(sha1.New(), xrsa.PKCS1, "publicKey content", []byte("621400000000567"), nil)
 	if err != nil {
 		xlog.Error(err)
 		return
 	}
-	encryptName, err := xrsa.RsaEncryptOAEPData(sha256.New(), xrsa.PKCS1, "publicKey.pem", []byte("Jerry"), nil)
+	// 加密 银行收款人，需要转 base64，微信解密使用的是 sha1
+	encryptName, err := xrsa.RsaEncryptOAEPData(sha1.New(), xrsa.PKCS1, "publicKey content", []byte("Jerry"), nil)
 	if err != nil {
 		xlog.Error(err)
 		return
 	}
-	bm.Set("enc_bank_no", encryptBank).
-		Set("enc_true_name", encryptName)
+	bm.Set("enc_bank_no", base64.StdEncoding.EncodeToString(encryptBank)).
+		Set("enc_true_name", base64.StdEncoding.EncodeToString(encryptName))
 
 	// 企业付款到银行卡API
-	wxRsp, err := client.PayBank(bm, "certFilePath", "keyFilePath", "pkcs12FilePath")
+	wxRsp, err := client.PayBank(ctx, bm)
 	if err != nil {
 		xlog.Errorf("client.EntrustPaying(%+v),error:%+v", bm, err)
 		return

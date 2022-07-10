@@ -52,6 +52,11 @@ const (
 	queryBank                   = "mmpaysptrans/query_bank"                           // 查询企业付款到银行卡API
 	getPublicKey                = "https://fraud.mch.weixin.qq.com/risk/getpublickey" // 获取RSA加密公钥API
 
+	// 海关自助清关
+	customsDeclareOrder   = "cgi-bin/mch/customs/customdeclareorder"        // 订单附加信息提交
+	customsDeclareQuery   = "cgi-bin/mch/customs/customdeclarequery"        // 订单附加信息查询
+	customsReDeclareOrder = "cgi-bin/mch/newcustoms/customdeclareredeclare" // 订单附加信息重推
+
 	// SanBox
 	sandboxGetSignKey   = "https://api.mch.weixin.qq.com/sandboxnew/pay/getsignkey"
 	sandboxMicroPay     = "sandboxnew/pay/micropay"
@@ -419,6 +424,7 @@ type EntrustAppPreResponse struct {
 	ReturnMsg       string `xml:"return_msg,omitempty" json:"return_msg,omitempty"`
 	ResultCode      string `xml:"result_code,omitempty" json:"result_code,omitempty"`
 	ErrCode         string `xml:"err_code,omitempty" json:"err_code,omitempty"`
+	ErrCodeDes      string `xml:"err_code_des,omitempty" json:"err_code_des,omitempty"`
 	Appid           string `xml:"appid,omitempty" json:"appid,omitempty"`
 	SubAppid        string `xml:"sub_appid,omitempty" json:"sub_appid,omitempty"`
 	MchId           string `xml:"mch_id,omitempty" json:"mch_id,omitempty"`
@@ -495,14 +501,6 @@ type RefundNotify struct {
 	RefundRecvAccout    string `xml:"refund_recv_accout,omitempty" json:"refund_recv_accout,omitempty"`
 	RefundAccount       string `xml:"refund_account,omitempty" json:"refund_account,omitempty"`
 	RefundRequestSource string `xml:"refund_request_source,omitempty" json:"refund_request_source,omitempty"`
-}
-
-type Code2SessionRsp struct {
-	SessionKey string `json:"session_key,omitempty"` // 会话密钥
-	Openid     string `json:"openid,omitempty"`      // 用户唯一标识
-	Unionid    string `json:"unionid,omitempty"`     // 用户在开放平台的唯一标识符
-	Errcode    int    `json:"errcode,omitempty"`     // 错误码
-	Errmsg     string `json:"errmsg,omitempty"`      // 错误信息
 }
 
 type PaidUnionId struct {
@@ -623,16 +621,6 @@ type CheckAccessTokenRsp struct {
 	Errmsg  string `json:"errmsg,omitempty"`  // 错误信息
 }
 
-type RefreshAppLoginAccessTokenRsp struct {
-	AccessToken  string `json:"access_token,omitempty"`
-	ExpiresIn    int    `json:"expires_in,omitempty"`
-	RefreshToken string `json:"refresh_token,omitempty"`
-	Openid       string `json:"openid,omitempty"`
-	Scope        string `json:"scope,omitempty"`
-	Errcode      int    `json:"errcode,omitempty"` // 错误码
-	Errmsg       string `json:"errmsg,omitempty"`  // 错误信息
-}
-
 // ProfitSharingResponse 请求分账返回结果
 type ProfitSharingResponse struct {
 	ReturnCode string `xml:"return_code,omitempty" json:"return_code,omitempty"` // 返回状态码 SUCCESS/FAIL 此字段是通信标识，非交易标识
@@ -654,31 +642,32 @@ type ProfitSharingResponse struct {
 
 // ProfitSharingQueryResponse 查询分账结果
 type ProfitSharingQueryResponse struct {
-	ReturnCode    string                   `xml:"return_code,omitempty" json:"return_code,omitempty"`       // 返回状态码 SUCCESS/FAIL 此字段是通信标识，非交易标识
-	ReturnMsg     string                   `xml:"return_msg,omitempty" json:"return_msg,omitempty"`         // 返回信息，如非空，为错误原因
-	ResultCode    string                   `xml:"result_code,omitempty" json:"result_code,omitempty"`       // 业务结果 SUCCESS：分账申请接收成功，结果通过分账查询接口查询 FAIL ：提交业务失败
-	ErrCode       string                   `xml:"err_code,omitempty" json:"err_code,omitempty"`             // 错误代码
-	ErrCodeDes    string                   `xml:"err_code_des,omitempty" json:"err_code_des,omitempty"`     // 错误代码描述
-	MchId         string                   `xml:"mch_id,omitempty" json:"mch_id,omitempty"`                 // 商户号
-	NonceStr      string                   `xml:"nonce_str,omitempty" json:"nonce_str,omitempty"`           // 随机字符串
-	Sign          string                   `xml:"sign,omitempty" json:"sign,omitempty"`                     // 签名
-	TransactionId string                   `xml:"transaction_id,omitempty" json:"transaction_id,omitempty"` // 微信订单号
-	OutOrderNo    string                   `xml:"out_order_no,omitempty" json:"out_order_no,omitempty"`     // 商户分账单号
-	OrderId       string                   `xml:"order_id,omitempty" json:"order_id,omitempty"`             // 微信分账单号
-	Status        string                   `xml:"status,omitempty" json:"status,omitempty"`                 // 分账单状态 ACCEPTED—受理成功 PROCESSING—处理中 FINISHED—处理完成 CLOSED—处理失败，已关单
-	CloseReason   string                   `xml:"close_reason,omitempty" json:"close_reason,omitempty"`     // 关单原因 NO_AUTH:分账授权已解除
-	Receivers     []*profitSharingReceiver `xml:"receivers,omitempty" json:"receivers,omitempty"`
+	ReturnCode    string `xml:"return_code,omitempty" json:"return_code,omitempty"`       // 返回状态码 SUCCESS/FAIL 此字段是通信标识，非交易标识
+	ReturnMsg     string `xml:"return_msg,omitempty" json:"return_msg,omitempty"`         // 返回信息，如非空，为错误原因
+	ResultCode    string `xml:"result_code,omitempty" json:"result_code,omitempty"`       // 业务结果 SUCCESS：分账申请接收成功，结果通过分账查询接口查询 FAIL ：提交业务失败
+	ErrCode       string `xml:"err_code,omitempty" json:"err_code,omitempty"`             // 错误代码
+	ErrCodeDes    string `xml:"err_code_des,omitempty" json:"err_code_des,omitempty"`     // 错误代码描述
+	MchId         string `xml:"mch_id,omitempty" json:"mch_id,omitempty"`                 // 商户号
+	NonceStr      string `xml:"nonce_str,omitempty" json:"nonce_str,omitempty"`           // 随机字符串
+	Sign          string `xml:"sign,omitempty" json:"sign,omitempty"`                     // 签名
+	TransactionId string `xml:"transaction_id,omitempty" json:"transaction_id,omitempty"` // 微信订单号
+	OutOrderNo    string `xml:"out_order_no,omitempty" json:"out_order_no,omitempty"`     // 商户分账单号
+	OrderId       string `xml:"order_id,omitempty" json:"order_id,omitempty"`             // 微信分账单号
+	Status        string `xml:"status,omitempty" json:"status,omitempty"`                 // 分账单状态 ACCEPTED—受理成功 PROCESSING—处理中 FINISHED—处理完成 CLOSED—处理失败，已关单
+	CloseReason   string `xml:"close_reason,omitempty" json:"close_reason,omitempty"`     // 关单原因 NO_AUTH:分账授权已解除
+	Receivers     string `xml:"receivers,omitempty" json:"receivers,omitempty"`
 }
 
-type profitSharingReceiver struct {
-	Amount       int    `xml:"amount,omitempty" json:"amount,omitempty"`           // 分账金额 分账金额，单位为分，只能为整数，不能超过原订单支付金额及最大分账比例金额
-	Description  string `xml:"description,omitempty" json:"description,omitempty"` // 分账描述
-	ReceiverType string `xml:"type,omitempty" json:"type,omitempty"`               // 分账接收方类型 MERCHANT_ID：商户ID ;PERSONAL_OPENID：个人openid
-	Account      string `xml:"account,omitempty" json:"account,omitempty"`         // 分账接收方账号
-	Result       string `xml:"result,omitempty" json:"result,omitempty"`           // 分账结果 PENDING:待分账 SUCCESS:分账成功 ADJUST:分账失败待调账 RETURNED:已转回分账方 CLOSED: 已关闭
-	FinishTime   string `xml:"finish_time,omitempty" json:"finish_time,omitempty"` // 分账完成时间
-	FailReason   string `xml:"fail_reason,omitempty" json:"fail_reason,omitempty"` // 分账失败原因 ACCOUNT_ABNORMAL:分账接收账户异常 NO_RELATION：分账关系已解除 RECEIVER_HIGH_RISK:高风险接收方
-}
+//
+//type profitSharingReceiver struct {
+//	Amount       int    `xml:"amount,omitempty" json:"amount,omitempty"`           // 分账金额 分账金额，单位为分，只能为整数，不能超过原订单支付金额及最大分账比例金额
+//	Description  string `xml:"description,omitempty" json:"description,omitempty"` // 分账描述
+//	ReceiverType string `xml:"type,omitempty" json:"type,omitempty"`               // 分账接收方类型 MERCHANT_ID：商户ID ;PERSONAL_OPENID：个人openid
+//	Account      string `xml:"account,omitempty" json:"account,omitempty"`         // 分账接收方账号
+//	Result       string `xml:"result,omitempty" json:"result,omitempty"`           // 分账结果 PENDING:待分账 SUCCESS:分账成功 ADJUST:分账失败待调账 RETURNED:已转回分账方 CLOSED: 已关闭
+//	FinishTime   string `xml:"finish_time,omitempty" json:"finish_time,omitempty"` // 分账完成时间
+//	FailReason   string `xml:"fail_reason,omitempty" json:"fail_reason,omitempty"` // 分账失败原因 ACCOUNT_ABNORMAL:分账接收账户异常 NO_RELATION：分账关系已解除 RECEIVER_HIGH_RISK:高风险接收方
+//}
 
 // ProfitSharingAddReceiverResponse 添加分账接收者结果
 type ProfitSharingAddReceiverResponse struct {
@@ -827,4 +816,98 @@ type hbinfo struct {
 	Openid  string `xml:"openid,omitempty" json:"openid,omitempty"`
 	Amount  string `xml:"amount,omitempty" json:"amount,omitempty"`
 	RcvTime string `xml:"rcv_time,omitempty" json:"rcv_time,omitempty"`
+}
+
+type CustomsDeclareOrderResponse struct {
+	ReturnCode              string `xml:"return_code,omitempty" json:"return_code,omitempty"`
+	ReturnMsg               string `xml:"return_msg,omitempty" json:"return_msg,omitempty"`
+	ResultCode              string `xml:"result_code,omitempty" json:"result_code,omitempty"`
+	ErrCode                 string `xml:"err_code,omitempty" json:"err_code,omitempty"`
+	ErrCodeDes              string `xml:"err_code_des,omitempty" json:"err_code_des,omitempty"`
+	SignType                string `xml:"sign_type,omitempty" json:"sign_type,omitempty"`
+	Sign                    string `xml:"sign,omitempty" json:"sign,omitempty"`
+	Appid                   string `xml:"appid,omitempty" json:"appid,omitempty"`
+	MchId                   string `xml:"mch_id,omitempty" json:"mch_id,omitempty"`
+	State                   string `xml:"state,omitempty" json:"state,omitempty"`
+	TransactionId           string `xml:"transaction_id,omitempty" json:"transaction_id,omitempty"`
+	OutTradeNo              string `xml:"out_trade_no,omitempty" json:"out_trade_no,omitempty"`
+	SubOrderNo              string `xml:"sub_order_no,omitempty" json:"sub_order_no,omitempty"`
+	SubOrderId              string `xml:"sub_order_id,omitempty" json:"sub_order_id,omitempty"`
+	ModifyTime              string `xml:"modify_time,omitempty" json:"modify_time,omitempty"`
+	CertCheckResult         string `xml:"cert_check_result,omitempty" json:"cert_check_result,omitempty"`
+	VerifyDepartment        string `xml:"verify_department,omitempty" json:"verify_department,omitempty"`
+	VerifyDepartmentTradeId string `xml:"verify_department_trade_id,omitempty" json:"verify_department_trade_id,omitempty"`
+}
+
+type CustomsDeclareQueryResponse struct {
+	ReturnCode              string `xml:"return_code,omitempty" json:"return_code,omitempty"`
+	ReturnMsg               string `xml:"return_msg,omitempty" json:"return_msg,omitempty"`
+	ResultCode              string `xml:"result_code,omitempty" json:"result_code,omitempty"`
+	ErrCode                 string `xml:"err_code,omitempty" json:"err_code,omitempty"`
+	ErrCodeDes              string `xml:"err_code_des,omitempty" json:"err_code_des,omitempty"`
+	Sign                    string `xml:"sign,omitempty" json:"sign,omitempty"`
+	Appid                   string `xml:"appid,omitempty" json:"appid,omitempty"`
+	MchId                   string `xml:"mch_id,omitempty" json:"mch_id,omitempty"`
+	TransactionId           string `xml:"transaction_id,omitempty" json:"transaction_id,omitempty"`
+	Count                   string `xml:"count,omitempty" json:"count,omitempty"`
+	SubOrderNo0             string `xml:"sub_order_no_0,omitempty"`
+	SubOrderNo1             string `xml:"sub_order_no_1,omitempty"`
+	SubOrderNo2             string `xml:"sub_order_no_2,omitempty"`
+	SubOrderId0             string `xml:"sub_order_id_0,omitempty"`
+	SubOrderId1             string `xml:"sub_order_id_1,omitempty"`
+	SubOrderId2             string `xml:"sub_order_id_2,omitempty"`
+	MchCustomsNo0           string `xml:"mch_customs_no_0,omitempty"`
+	MchCustomsNo1           string `xml:"mch_customs_no_1,omitempty"`
+	MchCustomsNo2           string `xml:"mch_customs_no_2,omitempty"`
+	Customs0                string `xml:"customs_0,omitempty"`
+	Customs1                string `xml:"customs_1,omitempty"`
+	Customs2                string `xml:"customs_2,omitempty"`
+	FeeType0                string `xml:"fee_type_0,omitempty"`
+	FeeType1                string `xml:"fee_type_1,omitempty"`
+	FeeType2                string `xml:"fee_type_2,omitempty"`
+	OrderFee0               string `xml:"order_fee_0,omitempty"`
+	OrderFee1               string `xml:"order_fee_1,omitempty"`
+	OrderFee2               string `xml:"order_fee_2,omitempty"`
+	Duty0                   string `xml:"duty_0,omitempty"`
+	Duty1                   string `xml:"duty_1,omitempty"`
+	Duty2                   string `xml:"duty_2,omitempty"`
+	TransportFee0           string `xml:"transport_fee_0,omitempty"`
+	TransportFee1           string `xml:"transport_fee_1,omitempty"`
+	TransportFee2           string `xml:"transport_fee_2,omitempty"`
+	ProductFee0             string `xml:"product_fee_0,omitempty"`
+	ProductFee1             string `xml:"product_fee_1,omitempty"`
+	ProductFee2             string `xml:"product_fee_2,omitempty"`
+	State0                  string `xml:"state_0,omitempty"`
+	State1                  string `xml:"state_1,omitempty"`
+	State2                  string `xml:"state_2,omitempty"`
+	Explanation0            string `xml:"explanation_0,omitempty"`
+	Explanation1            string `xml:"explanation_1,omitempty"`
+	Explanation2            string `xml:"explanation_2,omitempty"`
+	ModifyTime0             string `xml:"modify_time_0,omitempty"`
+	ModifyTime1             string `xml:"modify_time_1,omitempty"`
+	ModifyTime2             string `xml:"modify_time_2,omitempty"`
+	CertCheckResult0        string `xml:"cert_check_result_0,omitempty"`
+	CertCheckResult1        string `xml:"cert_check_result_1,omitempty"`
+	CertCheckResult2        string `xml:"cert_check_result_2,omitempty"`
+	VerifyDepartment        string `xml:"verify_department,omitempty" json:"verify_department,omitempty"`
+	VerifyDepartmentTradeId string `xml:"verify_department_trade_id,omitempty" json:"verify_department_trade_id,omitempty"`
+}
+
+type CustomsReDeclareOrderResponse struct {
+	ReturnCode    string `xml:"return_code,omitempty" json:"return_code,omitempty"`
+	ReturnMsg     string `xml:"return_msg,omitempty" json:"return_msg,omitempty"`
+	ResultCode    string `xml:"result_code,omitempty" json:"result_code,omitempty"`
+	ErrCode       string `xml:"err_code,omitempty" json:"err_code,omitempty"`
+	ErrCodeDes    string `xml:"err_code_des,omitempty" json:"err_code_des,omitempty"`
+	SignType      string `xml:"sign_type,omitempty" json:"sign_type,omitempty"`
+	Sign          string `xml:"sign,omitempty" json:"sign,omitempty"`
+	Appid         string `xml:"appid,omitempty" json:"appid,omitempty"`
+	MchId         string `xml:"mch_id,omitempty" json:"mch_id,omitempty"`
+	State         string `xml:"state,omitempty" json:"state,omitempty"`
+	TransactionId string `xml:"transaction_id,omitempty" json:"transaction_id,omitempty"`
+	OutTradeNo    string `xml:"out_trade_no,omitempty" json:"out_trade_no,omitempty"`
+	SubOrderNo    string `xml:"sub_order_no,omitempty" json:"sub_order_no,omitempty"`
+	SubOrderId    string `xml:"sub_order_id,omitempty" json:"sub_order_id,omitempty"`
+	ModifyTime    string `xml:"modify_time,omitempty" json:"modify_time,omitempty"`
+	Explanation   string `xml:"explanation,omitempty" json:"explanation,omitempty"`
 }

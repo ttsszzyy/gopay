@@ -16,8 +16,8 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/iGoogle-ink/gopay"
-	"github.com/iGoogle-ink/gopay/pkg/util"
+	"github.com/go-pay/gopay"
+	"github.com/go-pay/gopay/pkg/util"
 )
 
 // ParseNotifyToBodyMap 解析QQ支付异步通知的结果到BodyMap
@@ -31,7 +31,7 @@ func ParseNotifyToBodyMap(req *http.Request) (bm gopay.BodyMap, err error) {
 	}
 	bm = make(gopay.BodyMap)
 	if err = xml.Unmarshal(bs, &bm); err != nil {
-		return nil, fmt.Errorf("xml.Unmarshal(%s)：%w", string(bs), err)
+		return nil, fmt.Errorf("[%w]: %v, bytes: %s", gopay.UnmarshalErr, err, string(bs))
 	}
 	return
 }
@@ -64,20 +64,20 @@ func VerifySign(apiKey, signType string, bean interface{}) (ok bool, err error) 
 		bm := bean.(gopay.BodyMap)
 		bodySign := bm.GetString("sign")
 		bm.Remove("sign")
-		return getReleaseSign(apiKey, signType, bm) == bodySign, nil
+		return GetReleaseSign(apiKey, signType, bm) == bodySign, nil
 	}
 
 	bs, err := json.Marshal(bean)
 	if err != nil {
-		return false, fmt.Errorf("json.Marshal(%s)：%w", string(bs), err)
+		return false, fmt.Errorf("[%w]: %v, value: %v", gopay.MarshalErr, err, bean)
 	}
 	bm := make(gopay.BodyMap)
 	if err = json.Unmarshal(bs, &bm); err != nil {
-		return false, fmt.Errorf("json.Marshal(%s)：%w", string(bs), err)
+		return false, fmt.Errorf("[%w]: %v, bytes: %s", gopay.UnmarshalErr, err, string(bs))
 	}
 	bodySign := bm.GetString("sign")
 	bm.Remove("sign")
-	return getReleaseSign(apiKey, signType, bm) == bodySign, nil
+	return GetReleaseSign(apiKey, signType, bm) == bodySign, nil
 }
 
 type NotifyResponse struct {

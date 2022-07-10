@@ -3,25 +3,8 @@ package wechat
 import (
 	"testing"
 
-	"github.com/iGoogle-ink/gopay/pkg/xlog"
+	"github.com/go-pay/gopay/pkg/xlog"
 )
-
-func TestDecryptOpenDataToBodyMap(t *testing.T) {
-	data := "Kf3TdPbzEmhWMuPKtlKxIWDkijhn402w1bxoHL4kLdcKr6jT1jNcIhvDJfjXmJcgDWLjmBiIGJ5acUuSvxLws3WgAkERmtTuiCG10CKLsJiR+AXVk7B2TUQzsq88YVilDz/YAN3647REE7glGmeBPfvUmdbfDzhL9BzvEiuRhABuCYyTMz4iaM8hFjbLB1caaeoOlykYAFMWC5pZi9P8uw=="
-	iv := "Cds8j3VYoGvnTp1BrjXdJg=="
-	session := "lyY4HPQbaOYzZdG+JcYK9w=="
-
-	//解密开放数据
-	//    encryptedData:包括敏感数据在内的完整用户信息的加密数据
-	//    iv:加密算法的初始向量
-	//    sessionKey:会话密钥
-	bm, err := DecryptOpenDataToBodyMap(data, iv, session)
-	if err != nil {
-		xlog.Error(err)
-		return
-	}
-	xlog.Debug("WeChatUserPhone:", bm)
-}
 
 func TestDecryptRefundNotifyReqInfo(t *testing.T) {
 	key := "ziR0QKsTUfMOuochC9RfCdmfHECorQAP"

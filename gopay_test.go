@@ -1,36 +1,33 @@
 package gopay
 
 import (
+	"crypto/sha1"
+	"encoding/hex"
 	"encoding/xml"
+	"fmt"
 	"testing"
-	"time"
 
-	"github.com/iGoogle-ink/gopay/pkg/xhttp"
-	"github.com/iGoogle-ink/gopay/pkg/xlog"
+	"github.com/go-pay/gopay/pkg/xlog"
 )
 
 func TestBodyMap_CheckParamsNull(t *testing.T) {
 	bm := make(BodyMap)
 	bm.Set("name", "jerry")
 	bm.Set("age", 2)
-	bm.Set("phone", "")
+	bm.Set("phone", "123")
 	bm.Set("pi", 3.1415926)
 
 	err := bm.CheckEmptyError("name", "age", "phone")
 	if err != nil {
-		xlog.Errorf("bm.CheckEmptyError():error:%+v", err)
+		xlog.Errorf("bm.CheckEmptyError(),err: %+v", err)
 		return
 	}
-}
-
-func TestNewClient(t *testing.T) {
-	client := xhttp.NewClient()
-	res, _, errs := client.Get("http://www.baidu.com").SetTimeout(30 * time.Second).EndBytes()
-	if len(errs) > 0 {
-		xlog.Error(errs[0])
-		return
-	}
-	xlog.Info("bs:", res.StatusCode)
+	h := sha1.New()
+	h.Write([]byte("golang"))
+	bs := h.Sum(nil)
+	_signature := fmt.Sprintf("%s", hex.EncodeToString(bs))
+	xlog.Info(_signature) // 771e417b9dcae54aead2f3cbbbff340787bc462f
+	// 771e417b9dcae54aead2f3cbbbff340787bc462f
 }
 
 func TestBodyMap_UnmarshalXML(t *testing.T) {

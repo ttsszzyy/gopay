@@ -1,9 +1,9 @@
 package alipay
 
 import (
-	"github.com/iGoogle-ink/gopay"
-	"github.com/iGoogle-ink/gopay/alipay"
-	"github.com/iGoogle-ink/gopay/pkg/xlog"
+	"github.com/go-pay/gopay"
+	"github.com/go-pay/gopay/alipay"
+	"github.com/go-pay/gopay/pkg/xlog"
 )
 
 func TradeRefund() {
@@ -13,19 +13,22 @@ func TradeRefund() {
 	//    appId：应用ID
 	//    privateKey：应用私钥，支持PKCS1和PKCS8
 	//    isProd：是否是正式环境
-	client := alipay.NewClient("2016091200494382", privateKey, false)
+	client, err := alipay.NewClient("2016091200494382", privateKey, false)
+	if err != nil {
+		xlog.Error(err)
+		return
+	}
 	//配置公共参数
 	client.SetCharset("utf-8").
-		SetSignType(alipay.RSA2).
-		SetPrivateKeyType(alipay.PKCS1)
+		SetSignType(alipay.RSA2)
 
 	//请求参数
-	body := make(gopay.BodyMap)
-	body.Set("out_trade_no", "GZ201907301420334577")
-	body.Set("refund_amount", "5")
-	body.Set("refund_reason", "测试退款")
+	bm := make(gopay.BodyMap)
+	bm.Set("out_trade_no", "GZ201907301420334577")
+	bm.Set("refund_amount", "5")
+	bm.Set("refund_reason", "测试退款")
 	//发起退款请求
-	aliRsp, err := client.TradeRefund(body)
+	aliRsp, err := client.TradeRefund(ctx, bm)
 	if err != nil {
 		xlog.Error("err:", err)
 		return

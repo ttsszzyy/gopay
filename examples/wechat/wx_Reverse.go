@@ -1,10 +1,10 @@
 package wechat
 
 import (
-	"github.com/iGoogle-ink/gopay"
-	"github.com/iGoogle-ink/gopay/pkg/util"
-	"github.com/iGoogle-ink/gopay/pkg/xlog"
-	"github.com/iGoogle-ink/gopay/wechat"
+	"github.com/go-pay/gopay"
+	"github.com/go-pay/gopay/pkg/util"
+	"github.com/go-pay/gopay/pkg/xlog"
+	"github.com/go-pay/gopay/wechat"
 )
 
 func Reverse() {
@@ -18,12 +18,12 @@ func Reverse() {
 
 	// 初始化参数Map
 	bm := make(gopay.BodyMap)
-	bm.Set("nonce_str", util.GetRandomString(32)).
+	bm.Set("nonce_str", util.RandomString(32)).
 		Set("out_trade_no", "6aDCor1nUcAihrV5JBlI09tLvXbUp02B").
 		Set("sign_type", wechat.SignType_MD5)
 
 	//请求撤销订单，成功后得到结果，沙箱环境下，证书路径参数可传空
-	wxRsp, err := client.Reverse(bm, nil, nil, nil)
+	wxRsp, err := client.Reverse(ctx, bm)
 	if err != nil {
 		xlog.Error(err)
 		return

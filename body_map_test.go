@@ -5,8 +5,8 @@ import (
 	"encoding/xml"
 	"testing"
 
-	"github.com/iGoogle-ink/gopay/pkg/util"
-	"github.com/iGoogle-ink/gopay/pkg/xlog"
+	"github.com/go-pay/gopay/pkg/util"
+	"github.com/go-pay/gopay/pkg/xlog"
 )
 
 func TestBodyMapSetBodyMap(t *testing.T) {
@@ -15,11 +15,11 @@ func TestBodyMapSetBodyMap(t *testing.T) {
 	sceneInfo := make(map[string]map[string]string)
 	h5Info := make(map[string]string)
 	h5Info["type"] = "Wap"
-	h5Info["wap_url"] = "https://www.fumm.cc"
+	h5Info["wap_url"] = "https://www.fmm.ink"
 	h5Info["wap_name"] = "H5测试支付"
 	sceneInfo["h5_info"] = h5Info
 	bm.Set("scene_info", sceneInfo)
-	xlog.Debug("配合map使用：", bm) // map[scene_info:map[h5_info:map[type:Wap wap_name:H5测试支付 wap_url:https://www.fumm.cc]]]
+	xlog.Debug("配合map使用：", bm) // map[scene_info:map[h5_info:map[type:Wap wap_name:H5测试支付 wap_url:https://www.fmm.ink]]]
 
 	bm.Reset()
 	xlog.Debug(bm) // []
@@ -46,12 +46,13 @@ func TestBodyMapSetBodyMap(t *testing.T) {
 	bm.SetBodyMap("scene_info", func(bm BodyMap) {
 		bm.SetBodyMap("h5_info", func(bm BodyMap) {
 			bm.Set("type", "Wap").
-				Set("wap_url", "https://www.fumm.cc").
+				Set("wap_url", "https://www.fmm.ink").
 				Set("wap_name", "H5测试支付")
 		})
 	}).Set("7key", "7value").
 		Set("8key", "8value")
-	xlog.Debug("高级用法：", bm) // map[scene_info:map[h5_info:map[type:Wap wap_name:H5测试支付 wap_url:https://www.fumm.cc]]]
+	xlog.Debug("高级用法：", bm) // map[scene_info:map[h5_info:map[type:Wap wap_name:H5测试支付 wap_url:https://www.fmm.ink]]]
+	xlog.Debug("高级用法 JsonBody：", bm.JsonBody())
 }
 
 func TestBodyMapMarshal(t *testing.T) {
@@ -67,13 +68,28 @@ func TestBodyMapMarshal(t *testing.T) {
 	bm.SetBodyMap("scene_info", func(bm BodyMap) {
 		bm.SetBodyMap("h5_info", func(bm BodyMap) {
 			bm.Set("type", "Wap").
-				Set("wap_url", "https://www.fumm.cc").
+				Set("wap_url", "https://www.fmm.ink").
 				Set("wap_name", "H5测试支付")
 		})
 	}).Set("7key", "7value").
 		Set("8key", "8value")
 	jb2 := bm.JsonBody()
 	xlog.Debug("jb2:", jb2)
+
+	bm.Reset()
+
+	bm.SetBodyMap("partner", func(bm BodyMap) {
+		bm.Set("type", "APPID").
+			Set("appid", "wx123456").
+			Set("merchant_id", "88888")
+	}).SetBodyMap("authorized_data", func(bm BodyMap) {
+		bm.Set("business_type", "BUSIFAVOR_STOCK").
+			Set("stock_id", "66666")
+	}).Set("limit", 5).
+		Set("offset", 10)
+
+	urlParams := bm.EncodeURLParams()
+	xlog.Debug("urlParams:", urlParams)
 }
 
 func TestBodyMapMarshalSlice(t *testing.T) {
@@ -101,16 +117,30 @@ func TestBodyMapMarshalSlice(t *testing.T) {
 	bs, _ := json.Marshal(rs)
 
 	bm := make(BodyMap)
-	bm.Set("nonce_str", util.GetRandomString(32)).
+	bm.Set("nonce_str", util.RandomString(32)).
 		Set("transaction_id", "4208450740201411110007820472").
 		Set("out_order_no", "P20150806125346")
 
 	bm.Set("receivers", string(bs))
 
+	xlog.Debug("JsonBody:", bm.JsonBody())
 	//receiver := make(BodyMap)
 	//receiver.Set("receiver", string(bs))
 	//
 	//body := receiver.JsonBody()
 	bss, _ := xml.Marshal(bm)
 	xlog.Debug("body:", string(bss))
+}
+
+func TestSliceTest(t *testing.T) {
+	var rs []string
+	rs = append(rs, "SOFTWARE")
+	rs = append(rs, "SECURITY")
+	rs = append(rs, "LOVE_MARRIAGE")
+
+	bm := make(BodyMap)
+	bm.Set("sub_mchid", "2021060717").
+		Set("advertising_industry_filters", rs)
+
+	xlog.Debugf("%s", bm.JsonBody())
 }

@@ -6,12 +6,12 @@
 package wechat
 
 import (
+	"context"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/md5"
 	"encoding/base64"
 	"encoding/hex"
-	"encoding/json"
 	"encoding/xml"
 	"errors"
 	"fmt"
@@ -20,10 +20,10 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/iGoogle-ink/gopay"
-	xaes "github.com/iGoogle-ink/gopay/pkg/aes"
-	"github.com/iGoogle-ink/gopay/pkg/util"
-	"github.com/iGoogle-ink/gopay/pkg/xhttp"
+	"github.com/go-pay/gopay"
+	xaes "github.com/go-pay/gopay/pkg/aes"
+	"github.com/go-pay/gopay/pkg/util"
+	"github.com/go-pay/gopay/pkg/xhttp"
 )
 
 // ParseNotifyToBodyMap 解析微信支付异步通知的结果到BodyMap（推荐）
@@ -38,7 +38,7 @@ func ParseNotifyToBodyMap(req *http.Request) (bm gopay.BodyMap, err error) {
 	}
 	bm = make(gopay.BodyMap)
 	if err = xml.Unmarshal(bs, &bm); err != nil {
-		return nil, fmt.Errorf("xml.Unmarshal(%s)：%w", string(bs), err)
+		return nil, fmt.Errorf("[%w]: %v, bytes: %s", gopay.UnmarshalErr, err, string(bs))
 	}
 	return
 }
@@ -119,7 +119,7 @@ func DecryptRefundNotifyReqInfo(reqInfo, apiKey string) (refundNotify *RefundNot
 	bs = xaes.PKCS7UnPadding(encryptionB)
 	refundNotify = new(RefundNotify)
 	if err = xml.Unmarshal(bs, refundNotify); err != nil {
-		return nil, fmt.Errorf("xml.Unmarshal(%s)：%w", string(bs), err)
+		return nil, fmt.Errorf("[%w]: %v, bytes: %s", gopay.UnmarshalErr, err, string(bs))
 	}
 	return
 }
@@ -142,43 +142,6 @@ func (w *NotifyResponse) ToXmlString() (xmlStr string) {
 	return
 }
 
-// DecryptOpenDataToBodyMap 解密开放数据到 BodyMap
-//	encryptedData：包括敏感数据在内的完整用户信息的加密数据，小程序获取到
-//	iv：加密算法的初始向量，小程序获取到
-//	sessionKey：会话密钥，通过  gopay.Code2Session() 方法获取到
-//	文档：https://developers.weixin.qq.com/miniprogram/dev/framework/open-ability/signature.html
-func DecryptOpenDataToBodyMap(encryptedData, iv, sessionKey string) (bm gopay.BodyMap, err error) {
-	if encryptedData == util.NULL || iv == util.NULL || sessionKey == util.NULL {
-		return nil, errors.New("input params can not null")
-	}
-	var (
-		cipherText, aesKey, ivKey, plainText []byte
-		block                                cipher.Block
-		blockMode                            cipher.BlockMode
-	)
-	cipherText, _ = base64.StdEncoding.DecodeString(encryptedData)
-	aesKey, _ = base64.StdEncoding.DecodeString(sessionKey)
-	ivKey, _ = base64.StdEncoding.DecodeString(iv)
-	if len(cipherText)%len(aesKey) != 0 {
-		return nil, errors.New("encryptedData is error")
-	}
-	if block, err = aes.NewCipher(aesKey); err != nil {
-		return nil, fmt.Errorf("aes.NewCipher：%w", err)
-	} else {
-		blockMode = cipher.NewCBCDecrypter(block, ivKey)
-		plainText = make([]byte, len(cipherText))
-		blockMode.CryptBlocks(plainText, cipherText)
-		if len(plainText) > 0 {
-			plainText = xaes.PKCS7UnPadding(plainText)
-		}
-		bm = make(gopay.BodyMap)
-		if err = json.Unmarshal(plainText, &bm); err != nil {
-			return nil, fmt.Errorf("json.Marshal(%s)：%w", string(plainText), err)
-		}
-		return
-	}
-}
-
 // GetOpenIdByAuthCode 授权码查询openid(AccessToken:157字符)
 //	appId:APPID
 //	mchId:商户号
@@ -186,7 +149,7 @@ func DecryptOpenDataToBodyMap(encryptedData, iv, sessionKey string) (bm gopay.Bo
 //	authCode:用户授权码
 //	nonceStr:随即字符串
 //	文档：https://pay.weixin.qq.com/wiki/doc/api/micropay.php?chapter=9_13&index=9
-func GetOpenIdByAuthCode(appId, mchId, apiKey, authCode, nonceStr string) (openIdRsp *OpenIdByAuthCodeRsp, err error) {
+func GetOpenIdByAuthCode(ctx context.Context, appId, mchId, apiKey, authCode, nonceStr string) (openIdRsp *OpenIdByAuthCodeRsp, err error) {
 	var (
 		url string
 		bm  gopay.BodyMap
@@ -197,12 +160,12 @@ func GetOpenIdByAuthCode(appId, mchId, apiKey, authCode, nonceStr string) (openI
 	bm.Set("mch_id", mchId)
 	bm.Set("auth_code", authCode)
 	bm.Set("nonce_str", nonceStr)
-	bm.Set("sign", getReleaseSign(apiKey, SignType_MD5, bm))
+	bm.Set("sign", GetReleaseSign(apiKey, SignType_MD5, bm))
 
 	openIdRsp = new(OpenIdByAuthCodeRsp)
-	_, errs := xhttp.NewClient().Type(xhttp.TypeXML).Post(url).SendString(GenerateXml(bm)).EndStruct(openIdRsp)
-	if len(errs) > 0 {
-		return nil, errs[0]
+	_, err = xhttp.NewClient().Type(xhttp.TypeXML).Post(url).SendString(GenerateXml(bm)).EndStruct(ctx, openIdRsp)
+	if err != nil {
+		return nil, err
 	}
 	return openIdRsp, nil
 }
