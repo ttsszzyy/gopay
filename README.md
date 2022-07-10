@@ -20,14 +20,14 @@
 
 > 将 gopay 库中，非支付相关的一些接口方法独立出去另外的 sdk 库，在 go-pay 组织下新建 `wechat-sdk` 和 `alipay-sdk` 两个项目，分别实现各个平台相关接口方法，优先进行 `wechat-sdk` 开发。
 
-> 微信小程序或公众号相关接口方法：已从 `微信v2` 移步替换成 `github.com/ttsszzyy/wechat-sdk`
+> 微信小程序或公众号相关接口方法：已从 `微信v2` 移步替换成 `github.com/go-pay/wechat-sdk`
 
 <br>
 
 # 一、安装
 
 ```bash
-go get -u github.com/ttsszzyy/gopay
+go get -u github.com/go-pay/gopay
 ```
 
 #### 查看 GoPay 版本
